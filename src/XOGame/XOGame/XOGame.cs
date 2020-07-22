@@ -14,6 +14,7 @@ namespace XOGame
 		private char OnTurn = 'X';
 
 		private bool IsAIOnTurn => OnTurn == 'X' && Player1Type == PlayerType.AI || OnTurn == 'O' && Player2Type == PlayerType.AI;
+		private MiniMaxAI AI = new MiniMaxAI();
 
 		public XOGame()
 		{
@@ -155,7 +156,6 @@ namespace XOGame
 			if (IsAIOnTurn) return;
 
 			var field = (Label)sender;
-
 			var i = Convert.ToInt32(field.Name[3]) - 48;
 			var j = Convert.ToInt32(field.Name[4]) - 48;
 
@@ -170,9 +170,15 @@ namespace XOGame
 
 		private void AIDelay_Tick(object sender, EventArgs e)
 		{
+			if (!IsAIOnTurn) return;
+
 			AIDelay.Stop();
+			AI.SetState(Table, OnTurn);
+			var nextTurn = AI.NextTurn;
 
-
+			var result = ApplyTurn(nextTurn.Item1, nextTurn.Item2);
+			if (result == "#END") return;
+			if (result != null) MessageBox.Show(result, "Warning", MessageBoxButtons.OK, MessageBoxIcon.Error);
 		}
 
 		#endregion

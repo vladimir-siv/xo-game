@@ -46,6 +46,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Logic\MiniMaxAI.cs" />
     <Compile Include="Logic\PlayerType.cs" />
     <Compile Include="PlayerChooser.cs">
       <SubType>Form</SubType>
