@@ -1,8 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace XOGame
 {
@@ -10,6 +7,7 @@ namespace XOGame
 	{
 		public char[,] CurrentState { get; set; } = null;
 		public char MaxPlayer { get; set; } = ' ';
+		private char MinPlayer => OtherPlayer(MaxPlayer);
 
 		public void SetState(char[,] state, char player)
 		{
@@ -84,23 +82,77 @@ namespace XOGame
 
 			return nextStates;
 		}
-
-		public (int, int) NextTurn
+		private char OtherPlayer(char player)
 		{
-			get
+			switch (player)
 			{
-				int i = 0, j = 0;
-
-				do
-				{
-					var rng = new Random();
-					i = rng.Next(0, 3);
-					j = rng.Next(0, 3);
-				}
-				while (CurrentState[i, j] != ' ');
-
-				return (i, j);
+				case 'X': return 'O';
+				case 'O': return 'X';
+				default: return ' ';
 			}
 		}
+
+		private (int, int) Random()
+		{
+			int i = 0, j = 0;
+
+			do
+			{
+				var rng = new Random();
+				i = rng.Next(0, 3);
+				j = rng.Next(0, 3);
+			}
+			while (CurrentState[i, j] != ' ');
+
+			return (i, j);
+		}
+
+		private int MiniMax(char[,] currentState, char onTurn)
+		{
+			var end = CheckEnd(currentState);
+			if (end != null) return end.Value;
+
+			var best = 0;
+			if (onTurn == MaxPlayer) best = int.MinValue;
+			else best = int.MaxValue;
+
+			foreach (var nextState in CreateNextStates(currentState, onTurn))
+			{
+				var current = MiniMax(nextState.Item1, OtherPlayer(onTurn));
+				if (onTurn == MaxPlayer && current > best) best = current;
+				if (onTurn == MinPlayer && current < best) best = current;
+			}
+
+			return best;
+		}
+
+		private bool IsBeginning(char[,] currentState)
+		{
+			for (var i = 0; i < 3; ++i)
+				for (var j = 0; j < 3; ++j)
+					if (currentState[i, j] != ' ') return false;
+			return true;
+		}
+
+		private (int, int) MiniMaxStart(char[,] currentState)
+		{
+			if (IsBeginning(currentState))
+			{
+				var rng = new Random();
+				return (rng.Next(0, 3), rng.Next(0, 3));
+			}
+
+			(int, int, int) best = (-1, -1, int.MinValue);
+
+			foreach (var nextState in CreateNextStates(currentState, MaxPlayer))
+			{
+				var result = MiniMax(nextState.Item1, OtherPlayer(MaxPlayer));
+				if (result > best.Item3) best = (nextState.Item2, nextState.Item3, result);
+			}
+
+			return (best.Item1, best.Item2);
+		}
+
+		public (int, int) NextTurn => MiniMaxStart(CurrentState);
 	}
 }
